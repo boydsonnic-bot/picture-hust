@@ -1,0 +1,141 @@
+Run / Dev checklist — what to do every session (copyable PowerShell commands)
+
+Purpose: quick start checklist to run when you begin coding, and the steps to finish/commit after coding.
+
+---
+
+Quick start (minimal) — copy/paste when you begin:
+```powershell
+Set-Location -Path 'E:\MyProjects\picture-hust'
+git fetch origin
+git pull --rebase origin main
+.\.venv\Scripts\Activate.ps1    # optional: if you use venv
+```
+
+Quick finish (minimal) — after coding:
+```powershell
+git add .
+git commit -m "short message describing changes"
+git push origin HEAD
+deactivate    # optional: if you activated venv
+```
+
+
+1) Open project folder (PowerShell)
+```powershell
+Set-Location -Path 'E:\MyProjects\picture-hust'
+pwd
+```
+
+2) Update local repo from remote (recommended before you start)
+```powershell
+git fetch origin
+git pull --rebase origin main
+```
+
+3) Activate virtual environment
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+If PowerShell blocks scripts:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+.\.venv\Scripts\Activate.ps1
+```
+
+4) Quick sanity checks
+```powershell
+# python version and key libs
+python -c "import sys,cv2,numpy; print('python', sys.version.split()[0]); print('cv2', cv2.__version__); print('numpy', numpy.__version__)"
+
+# run unit tests (if any)
+if (Test-Path -Path '.\test') { pytest -q || echo 'Tests failed' }
+```
+
+5) Create feature branch (work on a small unit of work)
+```powershell
+# good naming: feature/<short-desc> or fix/<ticket>
+git checkout -b feature/short-description
+```
+
+6) Start coding (recommended cadence)
+- Work in small steps: code → run → test → commit
+- Keep commits small and descriptive
+
+7) Local quick-run of target script (example: preprocessing / contour detection)
+```powershell
+# run test script
+python .\test\test02.py --image .\test\img.png --save .\results\preview.png
+# view output (Windows)
+Start-Process .\results\preview.png
+```
+
+8) Run common checks before commit
+```powershell
+# Format & lint (if you use tools like black/flake8)
+# black .
+# flake8 .
+
+# run unit tests
+pytest -q
+```
+
+9) Stage + commit (small, focused commits)
+```powershell
+git add <files_changed>
+git commit -m "feat: short description of change"
+```
+If you edited many files and want to review staged diff:
+```powershell
+git add .
+git diff --staged --name-only
+git commit -m "chore: ..."
+```
+
+10) Push branch to remote and create PR (if ready)
+```powershell
+git push -u origin HEAD
+# then open GitHub and create PR from your branch to main
+```
+
+11) End-of-day / end-of-session checklist
+- Make sure tests pass locally
+- Push any remaining commits
+- Update `note/` files: add small bullet about what you did
+- If you want to sync to main, create PR and merge after review
+
+12) If you need to revert local changes
+```powershell
+# discard unstaged changes
+git restore <file>
+# undo last commit but keep changes staged
+git reset --soft HEAD~1
+```
+
+13) If you want to cleanup branches locally after merge
+```powershell
+# delete local branch
+git branch -d feature/short-description
+# delete remote branch
+git push origin --delete feature/short-description
+```
+
+14) Recovering from accidents
+- If repository is in a bad state and you want to reset local to remote main (destructive):
+```powershell
+git fetch origin
+git reset --hard origin/main
+```
+WARNING: this discards local commits not pushed.
+
+---
+
+Save `runcode.txt` as your daily checklist. Follow it every session to keep the repo clean and reproducible.
+# Activate venv (mỗi lần mở terminal mới)
+.\.venv\Scripts\Activate.ps1
+
+# Chạy test02.py
+python .\test\test02.py --image .\test\img.png --save result.png
+
+# Deactivate khi xong
+deactivate
