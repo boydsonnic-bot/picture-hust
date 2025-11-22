@@ -1,0 +1,66 @@
+(Instructions to recreate the project virtual environment and install dependencies)
+
+1) Copy project to new machine
+	- Place the project folder somewhere convenient, e.g. `E:\MyProjects\picture-hust`
+
+2) Create a virtual environment (recommended name: `.venv`)
+	- Open PowerShell and run:
+	  ```powershell
+	  Set-Location -Path 'E:\MyProjects\picture-hust'
+	  python -m venv .venv
+	  ```
+
+3) Activate the virtual environment (PowerShell)
+	- If you are using the default Windows PowerShell:
+	  ```powershell
+	  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+	  .\.venv\Scripts\Activate.ps1
+	  ```
+	- If you prefer cmd.exe use:
+	  ```cmd
+	  .\.venv\Scripts\activate.bat
+	  ```
+
+4) Upgrade pip and install dependencies from `requirements.txt`
+	- Recommended (after activation):
+	  ```powershell
+	  python -m pip install --upgrade pip
+	  python -m pip install -r requirements.txt
+	  ```
+	- If you don't want to activate, run directly with the venv python:
+	  ```powershell
+	  .\.venv\Scripts\python.exe -m pip install --upgrade pip
+	  .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+	  ```
+
+5) (Optional) Pin exact package versions from this machine
+	- On the machine that already has the working `.venv`, activate it and run:
+	  ```powershell
+	  .\.venv\Scripts\Activate.ps1
+	  python -m pip freeze > requirements.txt
+	  ```
+	- Commit the updated `requirements.txt` to Git so other machines install identical versions.
+
+6) Alternatives & portability
+	- Docker: build a Docker image containing Python and the packages to run the project without creating venvs on each machine.
+	- Conda: `conda env export > environment.yml` and recreate with `conda env create -f environment.yml`.
+
+7) Troubleshooting notes (Windows)
+	- If `Activate.ps1` fails, run the `Set-ExecutionPolicy` command shown in step 3 (it only affects the current PowerShell session).
+	- If `pip install` fails for packages with native extensions, install the Visual C++ Build Tools (or use wheels).
+
+8) Quick verification after install
+	```powershell
+	.\.venv\Scripts\Activate.ps1
+	python -c "import sys,cv2,numpy; print('python', sys.version); print('cv2', cv2.__version__); print('numpy', numpy.__version__)"
+	```
+
+9) Notes about `.venv` in Git
+	- Do NOT commit `.venv` to Git. Use `.gitignore` (already present) to exclude it.
+
+If you want, I can:
+- (A) Run `pip freeze > requirements.txt` now and commit the pinned versions, or
+- (B) Create a simple `Dockerfile` and `docker-compose.yml` for the project.
+
+Choose A or B or tell me to skip.
+

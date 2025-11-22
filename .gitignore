@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+dist/
+build/
+.pytest_cache/
+.vscode/
+*.egg-info/
+pip-wheel-metadata/
+.DS_Store
+*.zip

@@ -1,0 +1,120 @@
+Git usage — Quick reference (PowerShell)
+
+1) Cấu hình lần đầu (chỉ cần làm một lần trên máy):
+	```powershell
+	git config --global user.name "Your Name"
+	git config --global user.email "you@example.com"
+	git config --global core.editor "code --wait"   # optional: use VS Code as editor
+	```
+
+2) Clone repository về máy:
+	```powershell
+	git clone git@github.com:youruser/picture-hust.git
+	Set-Location -Path '.\picture-hust'
+	```
+
+3) Kiểm tra trạng thái và thay đổi:
+	```powershell
+	git status            # files changed, staged, untracked
+	git diff              # show unstaged changes
+	git diff --staged     # show staged changes
+	git add <file>        # stage a single file
+	git add .             # stage all changes (be careful)
+	git restore --staged <file>   # unstage a file
+	```
+
+4) Commit changes (tốt nhất làm commit nhỏ, có message rõ ràng):
+	```powershell
+	git commit -m "chore: update roadmap and requirements"
+	git log --oneline --graph --decorate --all
+	```
+
+5) Push lên remote (lần đầu với branch mới chỉ định upstream):
+	```powershell
+	git push origin main              # push main branch
+	git push -u origin feature/my-feature   # set upstream for new branch
+	```
+
+6) Lấy thay đổi từ remote trước khi push (safe workflow):
+	```powershell
+	git fetch origin
+	git pull --rebase origin main   # lấy về và rebase (ít merge commit hơn)
+	```
+
+7) Tạo và làm việc trên branch feature:
+	```powershell
+	git checkout -b feature/clahe
+	# code, test, then:
+	git add .
+	git commit -m "feat: add CLAHE preprocessing"
+	git push -u origin feature/clahe
+	```
+
+8) Khi cần khôi phục thay đổi cục bộ:
+	```powershell
+	git restore <file>         # discard unstaged changes in a file
+	git restore --source=HEAD --staged <file>  # unstage and revert to HEAD
+	git reset --hard HEAD      # WARNING: discard all local changes
+	```
+
+9) Hoàn tác commit (nếu commit chưa push):
+	```powershell
+	git reset --soft HEAD~1    # undo last commit but keep changes staged
+	git reset --mixed HEAD~1   # undo last commit, keep changes unstaged
+	```
+
+10) Tạo commit sửa lỗi trên remote (safety):
+	```powershell
+	# If you already pushed and need to correct, create a new commit that reverts or fixes
+	git revert <commit-hash>   # create a new commit that undoes the given commit
+	git push
+	```
+
+11) Khi cần rebase/force (thận trọng):
+	```powershell
+	git pull --rebase origin feature/branch
+	# Avoid force push on shared branches. If necessary:
+	git push --force-with-lease origin feature/branch
+	```
+
+12) Kiểm tra remote và branch:
+	```powershell
+	git remote -v
+	git branch --all
+	```
+
+13) Đồng bộ requirements / môi trường (good practice):
+	```powershell
+	# Pin current venv packages (on the machine with working .venv)
+	.\.venv\Scripts\Activate.ps1
+	python -m pip freeze > requirements.txt
+	git add requirements.txt
+	git commit -m "chore: freeze pip dependencies"
+	git push
+	```
+
+14) Tránh commit file lớn / .venv
+	- Đảm bảo `.gitignore` chứa `.venv/`, `*.zip`, `*.pyc` etc. (đã thêm sẵn)
+	- Với file lớn cần versioning, dùng Git LFS (Large File Storage)
+
+15) Workflow gợi ý cho bạn (safe and reproducible):
+	- Luôn làm việc trên branch feature: `git checkout -b feature/x`
+	- Commit nhỏ, message rõ ràng
+	- `git pull --rebase origin main` trước khi tạo PR
+	- Tạo PR (GitHub) từ feature → main, review trước khi merge
+
+16) Một số lệnh hữu ích khác:
+	```powershell
+	git stash save "wip: reason"   # tạm lưu thay đổi
+	git stash list
+	git stash pop
+	git show <commit-hash>          # xem nội dung 1 commit
+	git blame <file>                # ai sửa dòng nào
+	```
+
+17) Nếu bạn muốn, tôi có thể:
+	- (A) Commit và push các thay đổi hiện tại lên `origin main` cho bạn, hoặc
+	- (B) Hướng dẫn tạo Pull Request từng bước.
+
+Kết thúc.
+
