@@ -1,13 +1,8 @@
-# Lộ trình học 8 tuần (từ dễ → khó) cho dự án Computer Vision
+# Lộ trình học Computer Vision (từ dễ → khó)
 
 **Mục tiêu**: Nâng cấp từ code phát hiện contour cơ bản (`test02.py`) lên hệ thống phát hiện khuyết tật tự động (detection/classification) với Deep Learning.
 
-**Time budget**: 
-- Thứ 2-6: 1h/ngày × 5 = 5h/tuần
-- Thứ 7-CN: 3h/ngày × 2 = 6h/tuần
-- **Tổng: ~10-11h/tuần × 8 tuần = 80-88h**
-
-**Nguyên tắc**: Kiến thức từ dễ → khó; mỗi tuần vừa đọc lý thuyết vừa code thực hành.
+**Nguyên tắc**: Kiến thức từ dễ → khó; học từng giai đoạn, vừa đọc lý thuyết vừa code thực hành.
 
 ---
 
@@ -31,13 +26,13 @@ gray → GaussianBlur → Otsu threshold → findContours → boundingRect → s
 
 ---
 
-## 🗓️ Lộ trình 8 tuần (Easy → Hard)
+## 🗓️ Lộ trình học (Easy → Hard)
 
-### **TUẦN 1-2: Classical Computer Vision (Nền tảng xử lý ảnh)**
+### **Giai đoạn 1: Classical Computer Vision (Nền tảng xử lý ảnh)**
 
 **Mục tiêu**: Nâng cấp preprocessing pipeline (tiền xử lý ảnh tốt hơn)
 
-#### Tuần 1: Adaptive Thresholding & CLAHE
+#### Phần 1: Adaptive Thresholding & CLAHE
 - **Đọc từ PDF** (Chương 1-2 hoặc phần cơ bản): Python basics, NumPy, Matplotlib
 - **Đọc thêm (Google search)**:
   - `CLAHE OpenCV` (Contrast Limited Adaptive Histogram Equalization)
@@ -63,7 +58,7 @@ gray → GaussianBlur → Otsu threshold → findContours → boundingRect → s
 
 - **Output**: So sánh Otsu vs Adaptive + CLAHE side-by-side
 
-#### Tuần 2: Feature Engineering (Geometric features)
+#### Phần 2: Feature Engineering (Geometric features)
 - **Đọc thêm**:
   - `Contour features OpenCV` (area, perimeter, circularity, aspect ratio)
   - `Hu Moments invariant features`
@@ -85,15 +80,15 @@ gray → GaussianBlur → Otsu threshold → findContours → boundingRect → s
 
 - **Output**: CSV file chứa features của mỗi contour, filter contour theo rule-based (ví dụ: circularity < 0.5 → có thể là khuyết tật dạng crack)
 
-**📌 Keywords tuần 1-2**: `CLAHE`, `Adaptive Threshold`, `Morphology`, `Contour Features`, `Hu Moments`
+**📌 Keywords giai đoạn 1**: `CLAHE`, `Adaptive Threshold`, `Morphology`, `Contour Features`, `Hu Moments`
 
 ---
 
-### **TUẦN 3-4: Deep Learning Basics (CNN cơ bản cho Classification)**
+### **Giai đoạn 2: Deep Learning Basics (CNN cơ bản cho Classification)**
 
 **Mục tiêu**: Học CNN để phân loại ảnh (OK vs NG) hoặc phân loại từng contour
 
-#### Tuần 3: CNN Architecture & Transfer Learning
+#### Phần 1: CNN Architecture & Transfer Learning
 - **Đọc từ PDF**:
   - **Chương 3: Linear Regression** (trang 49-59) → hiểu Loss function (MSE, MAE), Gradient Descent, Regularization
   - **Chương 4-6: Neural Network basics, Backpropagation, CNN** (nếu có) → hiểu Convolution, Pooling, Activation (ReLU)
@@ -127,7 +122,7 @@ gray → GaussianBlur → Otsu threshold → findContours → boundingRect → s
 
 - **Output**: Model phân loại ảnh toàn bộ (full image) thành OK/NG với accuracy ~80-90%
 
-#### Tuần 4: Data Augmentation & Training
+#### Phần 2: Data Augmentation & Training
 - **Đọc từ PDF**:
   - **Chương Regularization** (trang 49-59): Dropout, L2 weight decay, BatchNorm, Early Stopping
   - **Chương Training & Optimization** (trang 27-35): Learning rate scheduling, Adam vs SGD
@@ -162,15 +157,15 @@ gray → GaussianBlur → Otsu threshold → findContours → boundingRect → s
 
 - **Output**: Model với augmentation + regularization, accuracy cải thiện ~5-10%, training curve (loss/accuracy plot)
 
-**📌 Keywords tuần 3-4**: `CNN`, `Convolution`, `Pooling`, `Transfer Learning`, `ResNet`, `MobileNet`, `Data Augmentation`, `Dropout`, `Learning Rate Scheduler`
+**📌 Keywords giai đoạn 2**: `CNN`, `Convolution`, `Pooling`, `Transfer Learning`, `ResNet`, `MobileNet`, `Data Augmentation`, `Dropout`, `Learning Rate Scheduler`
 
 ---
 
-### **TUẦN 5-6: Object Detection (Phát hiện & Định vị khuyết tật)**
+### **Giai đoạn 3: Object Detection (Phát hiện & Định vị khuyết tật)**
 
 **Mục tiêu**: Dùng YOLO hoặc Faster R-CNN để phát hiện vị trí khuyết tật (bounding box)
 
-#### Tuần 5: YOLO Basics & Labeling
+#### Phần 1: YOLO Basics & Labeling
 - **Đọc từ PDF**: 
   - Nếu có chương Detection → đọc IoU, mAP, Anchor boxes
   - Nếu không có → Google search
@@ -192,43 +187,62 @@ gray → GaussianBlur → Otsu threshold → findContours → boundingRect → s
 
 - **Code (5-6h)**:
   - Label ~50-100 ảnh bằng LabelImg (format YOLO txt)
-  - Train YOLOv8:
+  - Train YOLOv8/v11/RT-DETR (syntax giống hệt nhau):
   ```python
   from ultralytics import YOLO
   
+  # YOLOv8 - Baseline
   model = YOLO('yolov8n.pt')  # nano model (nhẹ, nhanh)
+  
+  # YOLOv11 - More accurate (recommended nếu muốn điểm cao)
+  model = YOLO('yolo11n.pt')  # hoặc yolo11s.pt
+  
+  # RT-DETR - Fastest inference (transformer-based)
+  model = YOLO('rtdetr-l.pt')  # hoặc rtdetr-x.pt
+  
+  # Training (cùng syntax cho cả 3 models)
   model.train(data='data.yaml', epochs=50, imgsz=640, batch=8)
   ```
 
 - **Output**: Model detect bounding box của khuyết tật, mAP@0.5 ~60-70% (tùy data quality)
 
-#### Tuần 6: Model Comparison & Optimization
+#### Phần 2: Model Comparison & Optimization
 - **Đọc thêm**:
   - `YOLO vs Faster R-CNN comparison`
   - `Model quantization INT8 FP16`
   - `ONNX export inference speed`
 
 - **Key concepts**:
-  - **YOLO**: Nhanh (real-time), accuracy trung bình
-  - **Faster R-CNN**: Chậm hơn, accuracy cao hơn (two-stage)
-  - **Model size**: YOLOv8n (nano) ~3MB, YOLOv8s (small) ~11MB, YOLOv8m (medium) ~26MB
+  - **YOLOv8**: Nhanh (real-time), accuracy trung bình, model nhỏ (3-11MB)
+  - **YOLOv11**: Giống YOLOv8 nhưng mAP cao hơn ~5%, model size tăng nhẹ (5-12MB)
+  - **RT-DETR**: Transformer-based, fastest inference (~2x faster GPU), nhưng model lớn hơn (20MB)
   - **Inference speed**: FPS (frames per second) trên CPU/GPU
+  - **Trade-offs**: YOLOv8 (balance), YOLOv11 (accuracy), RT-DETR (speed)
 
 - **Code (4-5h)**:
-  - So sánh YOLOv8n vs YOLOv8s
+  - So sánh YOLOv8n vs YOLOv8s (baseline)
+  - Nếu dư thời gian: thêm YOLOv11n, RT-DETR-L
   - Export to ONNX:
   ```python
   model.export(format='onnx')  # for deployment
+  
+  # Benchmark inference speed
+  import time
+  img = cv2.imread('test.jpg')
+  start = time.time()
+  results = model(img)
+  fps = 1 / (time.time() - start)
+  print(f"FPS: {fps:.2f}")
   ```
-  - Test inference speed
+  - Test inference speed (CPU/GPU)
 
 - **Output**: Báo cáo so sánh (mAP, FPS, model size), chọn model phù hợp
 
-**📌 Keywords tuần 5-6**: `YOLO`, `Object Detection`, `IoU`, `mAP`, `Bounding Box`, `Anchor`, `LabelImg`, `ONNX`
+**📌 Keywords giai đoạn 3**: `YOLO`, `YOLOv11`, `RT-DETR`, `Object Detection`, `IoU`, `mAP`, `Bounding Box`, `Anchor-free`, `Transformer Detection`, `LabelImg`, `ONNX`
 
 ---
 
-### **TUẦN 7: Semantic Segmentation (Nâng cao - phân đoạn pixel-level)**
+### **Giai đoạn 4: Semantic Segmentation (Nâng cao - phân đoạn pixel-level)**
 
 **Mục tiêu**: Dùng U-Net để phân đoạn khuyết tật (chính xác hơn bounding box)
 
@@ -249,6 +263,7 @@ gray → GaussianBlur → Otsu threshold → findContours → boundingRect → s
   # u_net.py (simplified)
   import segmentation_models_pytorch as smp
   
+  # U-Net - Standard choice (best accuracy)
   model = smp.Unet(
       encoder_name="resnet34",
       encoder_weights="imagenet",
@@ -256,73 +271,42 @@ gray → GaussianBlur → Otsu threshold → findContours → boundingRect → s
       classes=1,       # binary segmentation
   )
   
+  # DeepLabV3+ - Faster alternative (nếu dư thời gian)
+  model = smp.DeepLabV3Plus(
+      encoder_name="resnet50",       # hoặc mobilenet_v2 (fastest)
+      encoder_weights="imagenet",
+      in_channels=1,
+      classes=1
+  )
+  
   loss = smp.losses.DiceLoss(mode='binary')
+  
+  # Comparison: U-Net vs DeepLabV3+
+  # - U-Net: Dice ~0.78-0.85, inference ~200-400ms (CPU)
+  # - DeepLabV3+: Dice ~0.75-0.82, inference ~150-300ms (CPU)
+  # Trade-off: DeepLabV3+ 30-40% faster, 2-3% Dice drop
   ```
 
 - **Output**: Mask phân đoạn chính xác vùng khuyết tật (pixel-level), Dice score ~0.75-0.85
 
-**📌 Keywords tuần 7**: `U-Net`, `Semantic Segmentation`, `Dice Loss`, `Pixel-wise Classification`, `Encoder-Decoder`
+**📌 Keywords giai đoạn 4**: `U-Net`, `DeepLabV3+`, `Semantic Segmentation`, `Dice Loss`, `Pixel-wise Classification`, `Encoder-Decoder`, `ASPP`
 
 ---
 
-### **TUẦN 8: Deployment & System Integration**
 
-**Mục tiêu**: Đóng gói model thành API/app, tối ưu inference speed
-
-- **Đọc từ PDF**:
-  - **Chương Deployment** (nếu có): SavedModel, ONNX, TensorRT
-
-- **Đọc thêm**:
-  - `FastAPI machine learning deployment`
-  - `OpenVINO Intel optimization`
-  - `Docker containerization ML model`
-
-- **Key concepts**:
-  - **Model export**: `.pt` (PyTorch), `.onnx` (cross-framework), `.engine` (TensorRT)
-  - **Inference optimization**: 
-    - Quantization (FP32 → FP16/INT8) → 2-4× faster
-    - Batch inference (process multiple images at once)
-    - OpenVINO (Intel) / TensorRT (NVIDIA) for hardware acceleration
-  - **API**: FastAPI/Flask serve model qua HTTP
-  - **Docker**: Container hóa app (model + dependencies)
-
-- **Code (6-8h)**:
-  ```python
-  # api.py
-  from fastapi import FastAPI, UploadFile
-  import cv2
-  import numpy as np
-  from ultralytics import YOLO
-  
-  app = FastAPI()
-  model = YOLO('best.pt')
-  
-  @app.post("/predict")
-  async def predict(file: UploadFile):
-      img = cv2.imdecode(np.frombuffer(await file.read(), np.uint8), cv2.IMREAD_COLOR)
-      results = model(img)
-      return {"boxes": results[0].boxes.xyxy.tolist()}
-  ```
-
-- **Output**: 
-  - API endpoint nhận ảnh, trả về predictions
-  - Docker image chạy được trên máy khác
-  - Báo cáo tốc độ inference (ms/image)
-
-**📌 Keywords tuần 8**: `FastAPI`, `ONNX`, `TensorRT`, `OpenVINO`, `Quantization`, `Docker`, `Model Deployment`
 
 ---
 
 ## 📊 Tổng kết các mô hình cần tìm hiểu (theo thứ tự dễ → khó)
 
-| Tuần | Mô hình/Kỹ thuật | Mục đích | Độ khó |
+| Giai đoạn | Mô hình/Kỹ thuật | Mục đích | Độ khó |
 |------|------------------|----------|--------|
-| 1-2 | Classical CV (CLAHE, Morphology) | Preprocessing | ⭐ |
-| 3-4 | **ResNet/MobileNet** (Transfer Learning) | Image Classification | ⭐⭐ |
-| 5-6 | **YOLOv8** (Object Detection) | Detect bounding box | ⭐⭐⭐ |
-| 6 (optional) | **Faster R-CNN** | Detection accuracy cao hơn | ⭐⭐⭐⭐ |
-| 7 | **U-Net** (Semantic Segmentation) | Phân đoạn pixel-level | ⭐⭐⭐⭐ |
-| 7 (optional) | **Mask R-CNN** | Instance Segmentation | ⭐⭐⭐⭐⭐ |
+| 1 | Classical CV (CLAHE, Morphology) | Preprocessing | ⭐ |
+| 2 | **ResNet/MobileNet** (Transfer Learning) | Image Classification | ⭐⭐ |
+| 3 | **YOLOv8** (Object Detection) | Detect bounding box | ⭐⭐⭐ |
+| 3 (optional) | **YOLOv11 / RT-DETR** | More accurate / Faster detection | ⭐⭐⭐ |
+| 4 | **U-Net** (Semantic Segmentation) | Phân đoạn pixel-level | ⭐⭐⭐⭐ |
+| 4 (optional) | **DeepLabV3+** | Faster segmentation | ⭐⭐⭐⭐ |
 
 ---
 
@@ -364,29 +348,16 @@ gray → GaussianBlur → Otsu threshold → findContours → boundingRect → s
 
 ## 💡 Tips để không bị ngộp
 
-1. **Mỗi tuần chỉ focus 1 topic chính** (ví dụ: tuần 3 = CNN basics, đừng nhảy sang YOLO)
-2. **Code ngay sau khi đọc lý thuyết** (30 phút đọc → 30 phút code)
-3. **Lưu code + notes vào Git** (commit mỗi tuần để theo dõi progress)
+1. **Mỗi giai đoạn chỉ focus 1 topic chính** (ví dụ: CNN basics, đừng nhảy sang YOLO ngay)
+2. **Code ngay sau khi đọc lý thuyết** — học từng phần nhỏ
+3. **Lưu code + notes vào Git** — commit thường xuyên để theo dõi progress
 4. **Đọc PDF chương tương ứng trước, sau đó Google search chi tiết**
 5. **Ưu tiên practical (code) hơn theory sâu** (ví dụ: hiểu cách dùng YOLO > hiểu toán đằng sau YOLO)
+6. **Không cần làm theo thứ tự cứng nhắc** — nhảy giai đoạn nếu cần thiết cho project
 
 ---
 
-## 📝 Daily Schedule Template
-
-**Thứ 2-6 (1h/ngày)**:
-- 20 phút: Đọc lý thuyết (PDF + blog)
-- 30 phút: Code/experiment
-- 10 phút: Note lại key points + commit code
-
-**Thứ 7-CN (3h/ngày)**:
-- 1h: Đọc lý thuyết sâu hơn (paper, tutorial)
-- 1.5h: Code project chính (train model, test)
-- 30 phút: Review tuần + chuẩn bị tuần sau
-
----
-
-## 🎯 Deliverables cuối 8 tuần
+## 🎯 Deliverables cuối cùng
 
 1. ✅ **Preprocessing pipeline** nâng cấp (CLAHE + Adaptive Threshold + Morphology)
 2. ✅ **Classifier** (ResNet/MobileNet) phân loại OK/NG với accuracy >85%
@@ -397,4 +368,336 @@ gray → GaussianBlur → Otsu threshold → findContours → boundingRect → s
 
 ---
 
-**Next step**: Bắt đầu tuần 1 → upgrade `test02.py` với CLAHE + Adaptive Threshold. Bạn muốn tôi tạo file `test02_v2.py` mẫu không?
+## 🏥 Ứng dụng cuối kỳ: X-ray Defect Detection System
+
+**Yêu cầu tổng hợp** (tích hợp tất cả kiến thức từ 8 tuần):
+
+### Tính năng chính
+- ✅ **Nhận ảnh X-ray đầu vào** (upload qua web UI hoặc API)
+- ✅ **Phát hiện vùng khuyết tật** bằng **YOLOv8** (bounding box)
+- ✅ **Phân đoạn vùng khuyết tật** bằng **U-Net** (pixel-level mask)
+- ✅ **Tính toán tỷ lệ % khuyết tật**:
+  ```python
+  defect_ratio = (số pixel khuyết tật / tổng số pixel ROI) × 100%
+  ```
+- ✅ **Hiển thị kết quả** qua giao diện đơn giản:
+  - Input image (original)
+  - YOLOv8 detection (bounding boxes + confidence scores)
+  - U-Net segmentation (overlay mask màu đỏ/vàng)
+  - Metrics: % khuyết tật, số lượng defects, inference time
+
+### Kiến trúc hệ thống
+```
+┌─────────────┐      ┌──────────────┐      ┌─────────────┐
+│  Frontend   │ ───► │   Backend    │ ───► │   Models    │
+│  (Streamlit │      │  (FastAPI)   │      │ YOLOv8+UNet │
+│   hoặc      │ ◄─── │              │ ◄─── │             │
+│   Gradio)   │      │  Inference   │      │   ONNX      │
+└─────────────┘      └──────────────┘      └─────────────┘
+```
+
+### Implementation Plan
+
+#### 1. Model Training & Export
+```python
+# 1. Train YOLOv8 (detection)
+from ultralytics import YOLO
+model_yolo = YOLO('yolov8n.pt')
+model_yolo.train(data='xray_defect.yaml', epochs=50, imgsz=640)
+model_yolo.export(format='onnx')  # → best_yolo.onnx
+
+# 2. Train U-Net (segmentation)
+import segmentation_models_pytorch as smp
+model_unet = smp.Unet(encoder_name="resnet34", classes=1)
+# ... training loop ...
+torch.onnx.export(model_unet, dummy_input, 'unet.onnx')  # → unet.onnx
+```
+
+#### 2. Inference Pipeline
+```python
+# inference.py
+import cv2
+import numpy as np
+import onnxruntime as ort
+
+class XrayDefectDetector:
+    def __init__(self, yolo_path, unet_path):
+        self.yolo_session = ort.InferenceSession(yolo_path)
+        self.unet_session = ort.InferenceSession(unet_path)
+    
+    def detect_and_segment(self, image):
+        # Step 1: YOLOv8 detection
+        boxes, scores = self.run_yolo(image)
+        
+        # Step 2: U-Net segmentation (crop ROI từ YOLO boxes)
+        masks = []
+        for box in boxes:
+            x1, y1, x2, y2 = box
+            roi = image[y1:y2, x1:x2]
+            mask = self.run_unet(roi)
+            masks.append(mask)
+        
+        # Step 3: Calculate defect ratio
+        total_defect_pixels = sum([mask.sum() for mask in masks])
+        total_roi_pixels = sum([(x2-x1)*(y2-y1) for x1,y1,x2,y2 in boxes])
+        defect_ratio = (total_defect_pixels / total_roi_pixels) * 100 if total_roi_pixels > 0 else 0
+        
+        return {
+            'boxes': boxes,
+            'scores': scores,
+            'masks': masks,
+            'defect_ratio': defect_ratio,
+            'num_defects': len(boxes)
+        }
+```
+
+#### 3. API Backend (FastAPI)
+```python
+# api.py
+from fastapi import FastAPI, UploadFile, File
+import cv2
+import numpy as np
+from inference import XrayDefectDetector
+
+app = FastAPI()
+detector = XrayDefectDetector('best_yolo.onnx', 'unet.onnx')
+
+@app.post("/predict")
+async def predict(file: UploadFile = File(...)):
+    # Read image
+    img_bytes = await file.read()
+    nparr = np.frombuffer(img_bytes, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+    
+    # Run inference
+    results = detector.detect_and_segment(img)
+    
+    # Visualize
+    vis_img = visualize_results(img, results)
+    
+    return {
+        "num_defects": results['num_defects'],
+        "defect_ratio": f"{results['defect_ratio']:.2f}%",
+        "boxes": results['boxes'].tolist(),
+        "scores": results['scores'].tolist(),
+        "visualization": encode_image_base64(vis_img)
+    }
+```
+
+#### 4. Frontend UI (Streamlit hoặc Gradio)
+```python
+# app_streamlit.py
+import streamlit as st
+import requests
+from PIL import Image
+
+st.title("X-ray Defect Detection System")
+
+uploaded_file = st.file_uploader("Upload X-ray image", type=['png', 'jpg'])
+
+if uploaded_file is not None:
+    # Display original image
+    image = Image.open(uploaded_file)
+    st.image(image, caption='Original X-ray', use_column_width=True)
+    
+    # Send to API
+    files = {'file': uploaded_file.getvalue()}
+    response = requests.post('http://localhost:8000/predict', files=files)
+    results = response.json()
+    
+    # Display results
+    st.subheader("Detection Results")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Defects Found", results['num_defects'])
+    col2.metric("Defect Ratio", results['defect_ratio'])
+    col3.metric("Confidence", f"{max(results['scores'])*100:.1f}%")
+    
+    # Display visualization
+    st.image(results['visualization'], caption='YOLOv8 + U-Net Results', use_column_width=True)
+```
+
+### Báo cáo so sánh YOLOv8 vs U-Net
+
+#### Tiêu chí đánh giá
+
+| Tiêu chí | YOLOv8 | YOLOv11 | RT-DETR | U-Net | DeepLabV3+ | Ghi chú |
+|----------|---------|---------|---------|-------|------------|---------|
+| **Mục đích** | Bounding box | Bounding box | Bounding box | Pixel-level | Pixel-level | - |
+| **Độ chính xác** | mAP@0.5: 70-80% | mAP@0.5: 75-85% | mAP@0.5: 72-82% | Dice: 0.75-0.85 | Dice: 0.73-0.83 | YOLOv11 accurate nhất detection |
+| **Tốc độ (CPU)** | ~50-100ms | ~50-100ms | ~30-60ms | ~200-400ms | ~150-300ms | RT-DETR nhanh nhất |
+| **Tốc độ (GPU)** | ~10-20ms | ~10-20ms | ~5-10ms | ~30-50ms | ~20-35ms | RT-DETR fastest inference |
+| **Model size** | 3MB (nano) | 5MB (nano) | 20MB (L) | 20-50MB | 25-60MB | YOLO nhỏ nhất |
+| **Ease of use** | ✅ Rất dễ | ✅ Rất dễ | ✅ Rất dễ | ⭐⭐ Khá | ⭐⭐ Khá | Detection models dễ hơn |
+| **Use case** | Screening nhanh | Accuracy cao | Real-time | Tính % defect | Fast segmentation | Tùy yêu cầu |
+
+#### Ưu điểm
+
+**Detection Models (YOLOv8/v11/RT-DETR)**:
+- ✅ Rất nhanh (real-time trên GPU)
+- ✅ Model nhỏ gọn (YOLOv8: 3MB, YOLOv11: 5MB)
+- ✅ Dễ train (ít data, cùng syntax)
+- ✅ Tốt cho counting (đếm số lượng defects)
+- ✅ **YOLOv11**: Accurate nhất (mAP cao hơn YOLOv8 ~5%)
+- ✅ **RT-DETR**: Nhanh nhất inference (~2x faster than YOLO)
+
+**Segmentation Models (U-Net/DeepLabV3+)**:
+- ✅ Chính xác pixel-level (tính % defect chính xác)
+- ✅ Phân đoạn biên rõ ràng
+- ✅ Tốt cho medical/industrial images
+- ✅ Có thể phân biệt defects chồng lấn
+- ✅ **DeepLabV3+**: Nhanh hơn U-Net ~30-40%, pretrained encoders tốt
+
+#### Nhược điểm
+
+**Detection Models (YOLOv8/v11/RT-DETR)**:
+- ❌ Chỉ bounding box (không chính xác về diện tích)
+- ❌ Khó phân đoạn defects có hình dạng phức tạp
+- ❌ Box overlap khi defects gần nhau
+- ❌ **RT-DETR**: Model size lớn hơn YOLO (~20MB vs 3-5MB)
+
+**Segmentation Models (U-Net/DeepLabV3+)**:
+- ❌ Chậm hơn detection (2-4x)
+- ❌ Model lớn hơn (~25-60MB)
+- ❌ Cần nhiều data labeled (pixel-wise masks)
+- ❌ Khó train với small dataset
+- ❌ **DeepLabV3+**: Dice score thấp hơn U-Net ~2-3% (trade-off speed vs accuracy)
+
+#### Kết luận & Khuyến nghị
+
+**Chiến lược kết hợp (best of both worlds)**:
+1. **Stage 1 (Detection)**: YOLOv8/v11/RT-DETR → detect ROI nhanh
+2. **Stage 2 (Segmentation)**: U-Net/DeepLabV3+ → segment chi tiết trong ROI
+3. **Lợi ích**: Tốc độ detection + độ chính xác segmentation
+
+**Chọn model phù hợp**:
+- **YOLOv8**: Baseline tốt, nhỏ gọn (recommended bắt đầu)
+- **YOLOv11**: Accuracy cao nhất detection (+5% mAP) - nếu muốn điểm cao
+- **RT-DETR**: Fastest inference (real-time edge devices)
+- **U-Net**: Accuracy cao nhất segmentation (standard choice)
+- **DeepLabV3+**: Faster segmentation, trade-off 2-3% Dice cho 30-40% speed
+
+**Đề xuất cho báo cáo (tăng điểm)**:
+- **Minimum (pass)**: YOLOv8 + U-Net
+- **Better (điểm cao)**: Thêm YOLOv11 hoặc RT-DETR + so sánh detection models
+- **Best (điểm rất cao)**: Train cả 4-5 models → comparative analysis table với mAP/Dice/FPS/Size
+
+---
+
+---
+
+## 🔧 Giai đoạn 5 (Cuối cùng): UI & Deployment
+
+**Làm sau khi đã train xong model detection/segmentation**
+
+### Model Export & Optimization
+
+- **Đọc thêm**:
+  - `ONNX model export PyTorch`
+  - `Model quantization FP16 INT8`
+  - `TensorRT OpenVINO optimization`
+
+- **Key concepts**:
+  - **Model export**: `.pt` (PyTorch) → `.onnx` (cross-framework) → `.engine` (TensorRT)
+  - **Inference optimization**: 
+    - Quantization (FP32 → FP16/INT8) → 2-4× faster
+    - Batch inference (process multiple images at once)
+    - OpenVINO (Intel) / TensorRT (NVIDIA) for hardware acceleration
+
+- **Code**:
+  ```python
+  # Export YOLO to ONNX
+  from ultralytics import YOLO
+  model = YOLO('best.pt')
+  model.export(format='onnx')  # → best.onnx
+  
+  # Export U-Net to ONNX
+  import torch
+  torch.onnx.export(unet_model, dummy_input, 'unet.onnx')
+  ```
+
+**📌 Keywords**: `ONNX`, `TensorRT`, `OpenVINO`, `Quantization`, `Model Export`
+
+---
+
+### API Backend (FastAPI)
+
+- **Đọc thêm**:
+  - `FastAPI machine learning deployment`
+  - `Docker containerization ML model`
+
+- **Code**:
+  ```python
+  # api.py
+  from fastapi import FastAPI, UploadFile
+  import cv2
+  import numpy as np
+  from ultralytics import YOLO
+  
+  app = FastAPI()
+  model = YOLO('best.pt')
+  
+  @app.post("/predict")
+  async def predict(file: UploadFile):
+      img = cv2.imdecode(np.frombuffer(await file.read(), np.uint8), cv2.IMREAD_COLOR)
+      results = model(img)
+      return {"boxes": results[0].boxes.xyxy.tolist()}
+  ```
+
+**📌 Keywords**: `FastAPI`, `Docker`, `API Deployment`
+
+---
+
+### Frontend UI (Streamlit/Gradio)
+
+- **Code mẫu** (Streamlit):
+  ```python
+  # app_streamlit.py
+  import streamlit as st
+  import requests
+  from PIL import Image
+  
+  st.title("X-ray Defect Detection")
+  uploaded = st.file_uploader("Upload X-ray", type=['png', 'jpg'])
+  
+  if uploaded:
+      image = Image.open(uploaded)
+      st.image(image, caption='Original', use_column_width=True)
+      
+      # Send to API
+      files = {'file': uploaded.getvalue()}
+      response = requests.post('http://localhost:8000/predict', files=files)
+      results = response.json()
+      
+      st.metric("Defects Found", results['num_defects'])
+      st.metric("Defect Ratio", results['defect_ratio'])
+  ```
+
+**📌 Keywords**: `Streamlit`, `Gradio`, `Web UI`
+
+---
+
+## 📋 Checklist hoàn thành project
+
+### Core (Ưu tiên - đủ để pass)
+- [ ] **Giai đoạn 1-2**: Preprocessing + Classification (baseline)
+- [ ] **Giai đoạn 3**: YOLOv8 training + evaluation (mAP >70%)
+- [ ] **Giai đoạn 4**: U-Net training + evaluation (Dice >0.75)
+- [ ] **Inference pipeline**: YOLO → U-Net (script đã có: `scripts/inference_pipeline.py`)
+- [ ] **Báo cáo so sánh**: YOLOv8 vs U-Net (accuracy, speed, model size)
+
+### Advanced (Nếu dư thời gian - để điểm cao hơn)
+- [ ] **Detection comparison**: Train thêm YOLOv11 hoặc RT-DETR → compare với YOLOv8
+- [ ] **Segmentation comparison**: Train thêm DeepLabV3+ → compare với U-Net
+- [ ] **Comparative analysis**: Table so sánh mAP/Dice/FPS/Model Size của 4-5 models
+- [ ] **Ablation study**: Test các encoder backbones khác nhau (ResNet34 vs MobileNetV2 vs EfficientNet)
+
+### Polish (Làm sau)
+- [ ] **Model export**: Convert to ONNX/TensorRT
+- [ ] **API backend**: FastAPI serve model
+- [ ] **Frontend UI**: Streamlit/Gradio
+- [ ] **Docker deployment**: Container hóa app
+- [ ] **Demo video**: Upload ảnh → hiển thị kết quả
+
+---
+
+**Next step**: Bắt đầu giai đoạn 1 → upgrade `test02.py` với CLAHE + Adaptive Threshold. Hoặc nhảy thẳng sang giai đoạn 3-4 nếu muốn train YOLO/U-Net trước (recommended: focus detection/segmentation trước, UI sau).
