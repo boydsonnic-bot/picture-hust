@@ -1,8 +1,7 @@
 import cv2
-import numpy as np
+import numpy as np 
 import argparse
 import os
-from typing import Any
 
 
 def parse_args():
@@ -19,30 +18,51 @@ def main():
         print('failed to load image')
         return
     
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blured = cv2.GaussianBlur(gray, (5, 5), 0)
     var ,thresh = cv2.threshold(blured, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    contour_info = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contour_info = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # update for different OpenCV versions
-    if len(contour_info) == 3:
-        _, contours, _ = contour_info
-    else:
-        contours, _ = contour_info
+    contours = contour_info[-2]
     
     count = 0
     result = img.copy()
-    contours: list[Any] = list(contours)
-
+   
     for contour in contours:
+
+    # Bỏ contour nhỏ (nhiễu)
+        if cv2.contourArea(contour) < 100:
+            continue
+
+        # --- Geometric features ---
         area = cv2.contourArea(contour)
-        if  area > 0 :
-            x,y,w,h = cv2.boundingRect(contour)
-            cv2.rectangle(result, (x,y), (x+w, y+h), (0,0,255), 2)
-            cv2.putText(result, f'Area: {int(area)}', (x, y-10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)
-            count += 1
-            print ('contour found')
-            print(f'Contour {count}: Area = {area}')
+        perimeter = cv2.arcLength(contour, True)
+
+        circularity = 4 * np.pi * area / (perimeter**2) if perimeter > 0 else 0
+
+        x, y, w, h = cv2.boundingRect(contour)
+        aspect_ratio = float(w) / h if h > 0 else 0
+        cv2.drawContours(result, [contour], -1, (0,255,0), 2)
+        cv2.rectangle(result, (x,y), (x+w,y+h), (0,0,255), 2)
+        # --- Hu Moments ---
+        M = cv2.moments(contour)
+        if M['m00'] != 0:
+            hu = cv2.HuMoments(M).flatten()
+            hu_log = [-np.sign(h) * np.log10(abs(h) + 1e-10) for h in hu]
+        else:
+            hu_log = [0]*7
+
+        print("\n--- Contour ---")
+        print(f"Area: {area:.2f}")
+        print(f"Perimeter: {perimeter:.2f}")
+        print(f"Circularity: {circularity:.3f}")
+        print(f"Aspect Ratio: {aspect_ratio:.3f}")
+        print("Hu Moments:", hu_log)
+
+    # Optional: Hiển thị trực quan
+            
+
 
     # print('total contours found:', count)
     # print('threshold value otsu:', var)
@@ -57,7 +77,7 @@ def main():
 
     if arg.save:
         cv2.imwrite(arg.save, result)
-        print(f'[INFO] result saved to: {arg.save}')
+        print(f'[INFO] Saved: {os.path.abspath(arg.save)}')
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()

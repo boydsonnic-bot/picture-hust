@@ -19,20 +19,24 @@ def main():
         print('failed to load image')
         return
     
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blured = cv2.GaussianBlur(gray, (5, 5), 0)
     var ,thresh = cv2.threshold(blured, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    contour_info = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contour_info = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # update for different OpenCV versions
+    
     if len(contour_info) == 3:
         _, contours, _ = contour_info
+        return
     else:
-        contours, _ = contour_info
+        contours , _ = contour_info
     
+
     count = 0
     result = img.copy()
-
-    for contour in contours:
+   
+    for contour in contours :
         area = cv2.contourArea(contour)
         if  area > 0 :
             x,y,w,h = cv2.boundingRect(contour)
