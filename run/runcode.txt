@@ -18,8 +18,13 @@ git add .
 git commit -m "short message describing changes"
 git push origin HEAD
 deactivate    # optional: if you activated venv
-```
 
+
+add ```===
+Set-Location -Path 'C:\project\picture-hust'
+git add note/learning_roadmap.md scripts/inference_pipeline.py
+git commit -m "docs: update learning_roadmap.md; add inference pipeline"
+git push origin HEAD
 
 1) Open project folder (PowerShell)
 ```powershell
