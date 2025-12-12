@@ -5,8 +5,152 @@ from torch.utils.data import DataLoader, random_split
 from torchvision import models
 import os
 import time
-
+from tqdm import tqdm
+from torch.cuda.amp import autocast, GradScaler 
 from data import Cv2PreprocessDataset, transform_config
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-print(f"Using device: {device}")
+# ============================================================
+# 1. CẤU HÌNH (ĐỂ NGOÀI ĐỂ GLOBAL DÙNG ĐƯỢC)
+# ============================================================
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+BATCH_SIZE = 32         
+NUM_WORKERS = 8          # <--- ĐÃ TĂNG LÊN 4 (Thử vận may!)
+NUM_EPOCHS = 20          
+LR = 1e-3                
+NUM_CLASSES = 4          
+DATA_PATH = r'C:\project\picture-hust\data\train'
+
+# ============================================================
+# QUAN TRỌNG: CÂU LỆNH IF "THẦN THÁNH"
+# Mọi logic chạy code phải nằm sau dòng này
+# ============================================================
+if __name__ == '__main__':
+    # Lý do: Để Windows không bị lỗi "đẻ trứng" (Recursive spawn)
+    
+    print(f"🔥 Hardware: {DEVICE} | Workers: {NUM_WORKERS}")
+    
+    # ============================================================
+    # 2. CHUẨN BỊ DỮ LIỆU
+    # ============================================================
+    print("📂 Đang đọc dữ liệu...")
+    full_ds = Cv2PreprocessDataset(DATA_PATH, transform=transform_config)
+    
+    train_size = int(0.8 * len(full_ds))
+    val_size = len(full_ds) - train_size
+    train_ds, val_ds = random_split(full_ds, [train_size, val_size])
+    
+    # LƯU Ý: persistent_workers=True giúp giữ worker sống, không phải khởi động lại sau mỗi epoch
+    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, 
+                              num_workers=NUM_WORKERS, persistent_workers=True)
+                              
+    val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False, 
+                            num_workers=NUM_WORKERS, persistent_workers=True)
+
+    print(f"✅ Đã tải: {len(train_ds)} ảnh Train | {len(val_ds)} ảnh Val")
+
+    # ============================================================
+    # 3. XÂY DỰNG MODEL
+    # ============================================================
+    print("🛠️ Đang khởi tạo MobileNetV2...")
+    model = models.mobilenet_v2(weights='DEFAULT')
+
+    for name, param in model.features.named_parameters():
+        if "4" in name or "5" in name or "6" in name:
+            param.requires_grad = False
+
+    model.classifier[1] = nn.Sequential(
+        nn.Dropout(0.2),
+        nn.Linear(model.last_channel, NUM_CLASSES)
+    )
+    model = model.to(DEVICE)
+
+    # ============================================================
+    # 4. CÔNG CỤ HUẤN LUYỆN
+    # ============================================================
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=LR)
+    scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=5, T_mult=2)
+    scaler = GradScaler()
+
+    best_acc = 0.0
+    patience = 5
+    bad_epochs = 0
+
+    # ============================================================
+    # 5. VÒNG LẶP HUẤN LUYỆN
+    # ============================================================
+    print("\n🚀 BẮT ĐẦU HUẤN LUYỆN (ĐA LUỒNG)...")
+    
+    for epoch in range(NUM_EPOCHS):
+        start_time = time.time()
+        
+        # --- TRAIN ---
+        model.train()
+        train_loss = 0
+        train_correct = 0
+        train_total = 0
+        
+        loop = tqdm(train_loader, desc=f"Epoch [{epoch+1}/{NUM_EPOCHS}]", leave=True)
+        
+        for images, labels in loop:
+            images, labels = images.to(DEVICE), labels.to(DEVICE)
+            
+            optimizer.zero_grad()
+            
+            with autocast():
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+            
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+            
+            batch_loss = loss.item()
+            train_loss += batch_loss * images.size(0)
+            _, predicted = torch.max(outputs, 1)
+            train_total += labels.size(0)
+            train_correct += (predicted == labels).sum().item()
+            
+            loop.set_postfix(loss=batch_loss, acc=train_correct/train_total)
+            
+        train_acc = train_correct / train_total
+        train_loss_avg = train_loss / train_total
+        
+        # --- VAL ---
+        model.eval()
+        val_loss = 0
+        val_correct = 0
+        val_total = 0
+        
+        with torch.no_grad():
+            # Lưu ý: Val loader cũng dùng worker nên sẽ nhanh hơn
+            for images, labels in val_loader:
+                images, labels = images.to(DEVICE), labels.to(DEVICE)
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                
+                val_loss += loss.item() * images.size(0)
+                _, predicted = torch.max(outputs, 1)
+                val_total += labels.size(0)
+                val_correct += (predicted == labels).sum().item()
+                
+        val_acc = val_correct / val_total
+        val_loss_avg = val_loss / val_total
+        
+        scheduler.step(epoch)
+        
+        print(f"👉 KQ: Train Acc: {train_acc:.1%} | Val Acc: {val_acc:.1%} (Loss: {val_loss_avg:.4f})")
+        
+        if val_acc > best_acc:
+            best_acc = val_acc
+            torch.save(model.state_dict(), 'best_mobilenet_hybrid.pth')
+            print("💾 Đã lưu KỶ LỤC MỚI!")
+            bad_epochs = 0
+        else:
+            bad_epochs += 1
+            
+        if bad_epochs >= patience:
+            print(f"⛔ DỪNG SỚM!")
+            break
+
+    print(f"🏁 XONG! Best Acc: {best_acc:.1%}")
