@@ -45,7 +45,7 @@ def main():
 
 
 
-    contour_info = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contour_info = cv2.findContours(mo, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours: list[Any] = list(contour_info[-2])
 
     result = img.copy()
