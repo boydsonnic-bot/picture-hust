@@ -31,8 +31,8 @@ class CustomDataset(datasets.ImageFolder):
             return torch.zeros(3, 224, 224), label
         
         #img_gray = pre_process(img_bgr)
-        img_gray = img_bgr
-        img_rgb = cv2.cvtColor(img_gray, cv2.COLOR_GRAY2RGB)
+      
+        img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
         img_pil = Image.fromarray(img_rgb)
 
         if self.transform:

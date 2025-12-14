@@ -17,7 +17,7 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 # Cấu hình nhẹ cho CPU/máy yếu; tăng dần nếu đủ RAM/GPU
 BATCH_SIZE = 32
 NUM_WORKERS = 4  # đặt 0 cho CPU yếu; tăng 1-2 nếu còn dư RAM
-NUM_EPOCHS = 20
+NUM_EPOCHS = 50
 # LR cao dễ dao động; khi fine-tune backbone nên giảm LR
 HEAD_LR = 1e-3
 BACKBONE_LR = 1e-4
