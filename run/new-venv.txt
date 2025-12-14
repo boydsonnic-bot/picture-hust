@@ -3,10 +3,14 @@
 1) Copy project to new machine
 	- Place the project folder somewhere convenient, e.g. `E:\MyProjects\picture-hust`
 
+	- Recommended Python: 3.10.x (install it first)
+
 2) Create a virtual environment (recommended name: `.venv`)
 	- Open PowerShell and run:
 	  ```powershell
 	  Set-Location -Path 'E:\MyProjects\picture-hust'
+	  # Ensure this is Python 3.10:
+	  python --version
 	  python -m venv .venv
 	  ```
 

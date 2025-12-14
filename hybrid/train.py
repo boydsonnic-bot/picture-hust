@@ -3,21 +3,28 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from torchvision import models
-import os
 import time
+import random
+from contextlib import nullcontext
 from tqdm import tqdm
-from torch.cuda.amp import autocast, GradScaler 
+from torch.amp import autocast, GradScaler
 from data import Cv2PreprocessDataset, transform_config
 
 # ============================================================
 # 1. CẤU HÌNH (ĐỂ NGOÀI ĐỂ GLOBAL DÙNG ĐƯỢC)
 # ============================================================
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE = 32         
-NUM_WORKERS = 8          # <--- ĐÃ TĂNG LÊN 4 (Thử vận may!)
-NUM_EPOCHS = 20          
-LR = 1e-3                
-NUM_CLASSES = 4          
+# Cấu hình nhẹ cho CPU/máy yếu; tăng dần nếu đủ RAM/GPU
+BATCH_SIZE = 32
+NUM_WORKERS = 4  # đặt 0 cho CPU yếu; tăng 1-2 nếu còn dư RAM
+NUM_EPOCHS = 20
+# LR cao dễ dao động; khi fine-tune backbone nên giảm LR
+HEAD_LR = 1e-3
+BACKBONE_LR = 1e-4
+WEIGHT_DECAY = 1e-4
+# Unfreeze vài block cuối để vượt trần ~60% khi chỉ train classifier
+UNFREEZE_LAST_N_BLOCKS = 2
+NUM_CLASSES = 4
 DATA_PATH = r'C:\project\picture-hust\data\train'
 
 # ============================================================
@@ -25,26 +32,51 @@ DATA_PATH = r'C:\project\picture-hust\data\train'
 # Mọi logic chạy code phải nằm sau dòng này
 # ============================================================
 if __name__ == '__main__':
-    # Lý do: Để Windows không bị lỗi "đẻ trứng" (Recursive spawn)
-    
+    # Đặt seed để tái lập
+    SEED = 42
+    random.seed(SEED)
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed_all(SEED)
+
     print(f"🔥 Hardware: {DEVICE} | Workers: {NUM_WORKERS}")
     
     # ============================================================
     # 2. CHUẨN BỊ DỮ LIỆU
     # ============================================================
     print("📂 Đang đọc dữ liệu...")
-    full_ds = Cv2PreprocessDataset(DATA_PATH, transform=transform_config)
-    
+    # Dùng transform riêng cho train/val để tránh augment vào val
+    full_ds = Cv2PreprocessDataset(DATA_PATH, transform=None)
     train_size = int(0.8 * len(full_ds))
     val_size = len(full_ds) - train_size
-    train_ds, val_ds = random_split(full_ds, [train_size, val_size])
-    
-    # LƯU Ý: persistent_workers=True giúp giữ worker sống, không phải khởi động lại sau mỗi epoch
-    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, 
-                              num_workers=NUM_WORKERS, persistent_workers=True)
-                              
-    val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False, 
-                            num_workers=NUM_WORKERS, persistent_workers=True)
+    split_gen = torch.Generator().manual_seed(SEED)
+    train_indices, val_indices = random_split(range(len(full_ds)), [train_size, val_size], generator=split_gen)
+
+    # Tạo dataset train/val riêng để gán transform khác nhau
+    train_ds = Cv2PreprocessDataset(DATA_PATH, transform=transform_config['train'])
+    val_ds   = Cv2PreprocessDataset(DATA_PATH, transform=transform_config['val'])
+    train_ds.samples = [full_ds.samples[i] for i in train_indices]
+    val_ds.samples   = [full_ds.samples[i] for i in val_indices]
+
+    # persistent_workers dùng khi num_workers > 0
+    use_cuda = (DEVICE == 'cuda')
+
+    train_loader = DataLoader(
+        train_ds,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        num_workers=NUM_WORKERS,
+        persistent_workers=NUM_WORKERS > 0,
+        pin_memory=use_cuda,
+    )
+                               
+    val_loader = DataLoader(
+        val_ds,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        num_workers=NUM_WORKERS,
+        persistent_workers=NUM_WORKERS > 0,
+        pin_memory=use_cuda,
+    )
 
     print(f"✅ Đã tải: {len(train_ds)} ảnh Train | {len(val_ds)} ảnh Val")
 
@@ -54,9 +86,16 @@ if __name__ == '__main__':
     print("🛠️ Đang khởi tạo MobileNetV2...")
     model = models.mobilenet_v2(weights='DEFAULT')
 
-    for name, param in model.features.named_parameters():
-        if "4" in name or "5" in name or "6" in name:
-            param.requires_grad = False
+    # Freeze backbone, chỉ fine-tune classifier cho nhanh/học dễ
+    for param in model.features.parameters():
+        param.requires_grad = False
+
+    # Unfreeze một vài block cuối để model học thêm đặc trưng cho dataset
+    if UNFREEZE_LAST_N_BLOCKS and UNFREEZE_LAST_N_BLOCKS > 0:
+        last_blocks = list(model.features.children())[-UNFREEZE_LAST_N_BLOCKS:]
+        for block in last_blocks:
+            for param in block.parameters():
+                param.requires_grad = True
 
     model.classifier[1] = nn.Sequential(
         nn.Dropout(0.2),
@@ -67,10 +106,19 @@ if __name__ == '__main__':
     # ============================================================
     # 4. CÔNG CỤ HUẤN LUYỆN
     # ============================================================
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=LR)
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.05)
+
+    backbone_params = [p for p in model.features.parameters() if p.requires_grad]
+    head_params = [p for p in model.classifier.parameters() if p.requires_grad]
+    optimizer = optim.AdamW(
+        [
+            {'params': backbone_params, 'lr': BACKBONE_LR},
+            {'params': head_params, 'lr': HEAD_LR},
+        ],
+        weight_decay=WEIGHT_DECAY,
+    )
     scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=5, T_mult=2)
-    scaler = GradScaler()
+    scaler = GradScaler(enabled=use_cuda)
 
     best_acc = 0.0
     patience = 5
@@ -93,17 +141,23 @@ if __name__ == '__main__':
         loop = tqdm(train_loader, desc=f"Epoch [{epoch+1}/{NUM_EPOCHS}]", leave=True)
         
         for images, labels in loop:
-            images, labels = images.to(DEVICE), labels.to(DEVICE)
+            images = images.to(DEVICE, non_blocking=use_cuda)
+            labels = labels.to(DEVICE, non_blocking=use_cuda)
             
             optimizer.zero_grad()
             
-            with autocast():
+            amp_ctx = autocast(device_type='cuda', dtype=torch.float16, enabled=use_cuda) if use_cuda else nullcontext()
+            with amp_ctx:
                 outputs = model(images)
                 loss = criterion(outputs, labels)
             
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            if use_cuda:
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                optimizer.step()
             
             batch_loss = loss.item()
             train_loss += batch_loss * images.size(0)
@@ -125,7 +179,8 @@ if __name__ == '__main__':
         with torch.no_grad():
             # Lưu ý: Val loader cũng dùng worker nên sẽ nhanh hơn
             for images, labels in val_loader:
-                images, labels = images.to(DEVICE), labels.to(DEVICE)
+                images = images.to(DEVICE, non_blocking=use_cuda)
+                labels = labels.to(DEVICE, non_blocking=use_cuda)
                 outputs = model(images)
                 loss = criterion(outputs, labels)
                 
