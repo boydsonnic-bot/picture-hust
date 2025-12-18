@@ -1,0 +1,8 @@
+path: C:\project\picture-hust\Full\data
+train: data\train
+val: data\val
+nc: 4
+names:
+ 0: CR
+ 1: LP
+ 2: PO

@@ -1,0 +1,26 @@
+<annotation>
+	<folder>img</folder>
+	<filename>cr (1).png</filename>
+	<path>C:\project\picture-hust\Full\data\train\img\cr (1).png</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>227</width>
+		<height>227</height>
+		<depth>1</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>CR</name>
+		<pose>Unspecified</pose>
+		<truncated>1</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>1</xmin>
+			<ymin>98</ymin>
+			<xmax>227</xmax>
+			<ymax>128</ymax>
+		</bndbox>
+	</object>
+</annotation>

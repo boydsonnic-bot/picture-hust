@@ -1,67 +1,69 @@
-import cv2
-import numpy as np
-import argparse
+import sys
 import os
-from typing import Any
 
+# Thêm đường dẫn thư mục cha (project root) và thư mục hybrid vào hệ thống
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+hybrid_dir = os.path.join(parent_dir, 'hybrid')
+sys.path.append(hybrid_dir)
 
-def parse_args():
-    p = argparse.ArgumentParser(description='Contour detection v1.2 (basic + save)')
-    p.add_argument('--image', type=str, default='image.png', help='input image path')
-    p.add_argument('--save', type=str, default='result_contours.png', help='output image path')
-    return p.parse_args()
+# Bây giờ mới import được
+import torch
+from torch.utils.data import DataLoader
+from data import Cv2PreprocessDataset, transform_config # Python đã tìm thấy file data.py
+# 1. CẤU HÌNH CƠ BẢN
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+DATA_PATH = r'C:\project\picture-hust\data\train' # <--- Sửa lại đường dẫn nếu cần
 
+print(f"🔥 Đang test trên thiết bị: {DEVICE}")
 
-def main():
-    arg = parse_args()
-    img = cv2.imread(arg.image)
-    if img is None:
-        print('failed to load image')
-        return
+# 2. CHUẨN BỊ DỮ LIỆU (Phải có cái này mới test được)
+print("📂 Đang đọc dữ liệu...")
+try:
+    full_ds = Cv2PreprocessDataset(DATA_PATH, transform=transform_config)
     
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    blured = cv2.GaussianBlur(gray, (5, 5), 0)
-    var ,thresh = cv2.threshold(blured, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    contour_info = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    # update for different OpenCV versions
-    if len(contour_info) == 3:
-        _, contours, _ = contour_info
-    else:
-        contours, _ = contour_info
+    # Lấy tạm 80% để test (giống file train)
+    train_size = int(0.8 * len(full_ds))
+    val_size = len(full_ds) - train_size
+    train_ds, _ = random_split(full_ds, [train_size, val_size])
     
-    count = 0
-    result = img.copy()
-    contours: list[Any] = list(contours)
+    print(f"✅ Đã load xong {len(train_ds)} ảnh để test.")
 
-    for contour in contours:
-        area = cv2.contourArea(contour)
-        if  area > 0 :
-            x,y,w,h = cv2.boundingRect(contour)
-            cv2.rectangle(result, (x,y), (x+w, y+h), (0,0,255), 2)
-            cv2.putText(result, f'Area: {int(area)}', (x, y-10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)
-            count += 1
-            print ('contour found')
-            print(f'Contour {count}: Area = {area}')
+except Exception as e:
+    print(f"❌ Lỗi đọc dữ liệu: {e}")
+    exit()
 
-    # print('total contours found:', count)
-    # print('threshold value otsu:', var)
+# 3. BẮT ĐẦU TEST BATCH SIZE (Đoạn code bạn muốn chạy)
+print("\n🚀 BẮT ĐẦU TEST TẢI TRỌNG GPU...")
+print("-" * 30)
 
-    print(f'[INFO] otsu threshold value: {var}')
-    print(f'[INFO] total contours found: {count}')
+for bs in [16, 32, 64, 128]: # Thử thêm cả 128 cho máu
+    print(f"Testing Batch Size = {bs} ...", end=" ")
+    try:
+        # Tạo loader tạm
+        test_loader = DataLoader(train_ds, batch_size=bs, shuffle=True, num_workers=0)
+        
+        # Bốc thử 1 gói
+        images, labels = next(iter(test_loader))
+        
+        # Ném vào GPU
+        images = images.to(DEVICE)
+        labels = labels.to(DEVICE)
+        
+        print("✅ OK! (GPU chịu được)")
+        
+        # Dọn dẹp bộ nhớ ngay để test cái tiếp theo
+        del images, labels
+        torch.cuda.empty_cache() 
+        
+    except RuntimeError as e:
+        if "out of memory" in str(e):
+            print("❌ QUÁ TẢI! (Tràn bộ nhớ VRAM)")
+        else:
+            print(f"❌ Lỗi khác: {e}")
+            
+    except Exception as e:
+        print(f"❌ Lỗi lạ: {e}")
 
-    cv2.imshow('Contours', result)
-    cv2.imshow('Gray', gray)
-    cv2.imshow('Blurred (5x5)', blured)
-    cv2.imshow('Threshold (Otsu)', thresh)
-
-    if arg.save:
-        cv2.imwrite(arg.save, result)
-        print(f'[INFO] result saved to: {arg.save}')
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-if __name__ == '__main__':
-    main()
-    
+print("-" * 30)
+print("🏁 Hoàn tất kiểm tra.")
