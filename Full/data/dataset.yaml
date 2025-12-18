@@ -1,7 +1,8 @@
-path: C:\project\picture-hust\Full\data
-train: data\train
-val: data\val
-nc: 4
+
+train: train
+val: val
+
+nc: 3
 names:
  0: CR
  1: LP

@@ -1,0 +1,9 @@
+path: auto_labels/data
+train: train
+val: val
+
+nc: 3
+names:
+ 0: CR
+ 1: LP
+ 2: PO

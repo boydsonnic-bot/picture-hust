@@ -1,27 +1,21 @@
-from pathlib import Path
+import torch
+from ultralytics import YOLO
 
-LABEL_DIR = Path("data/val/labels")  # đổi nếu cần
+device = 0 if torch.cuda.is_available() else 'cpu'
 
-for txt_file in LABEL_DIR.glob("*.txt"):
-    new_lines = []
+if __name__ == '__main__':
 
-    with open(txt_file, "r") as f:
-        for line in f:
-            parts = line.strip().split()
-            if not parts:
-                continue
+    model = YOLO('yolov8s.pt')  
 
-            cls = parts[0]
+    model.train(
+        data = 'C:\\project\\picture-hust\\auto_labels\\data\\datasetV2.yaml',
+        epochs = 30,
+        batch = 16,
+        imgsz = 320,
+        device = device,
+        project = 'C:\\project\\picture-hust\\Full\\experiments\\yolo_results',
+        name= 'xray_320s16V2'
+        )
 
-            # HOÁN ĐỔI LP <-> PO
-            if cls == "1":      # LP nhầm
-                cls = "2"
-            elif cls == "2":    # PO nhầm
-                cls = "1"
-
-            new_lines.append(" ".join([cls] + parts[1:]))
-
-    with open(txt_file, "w") as f:
-        f.write("\n".join(new_lines))
-
-print("✅ Đã sửa xong toàn bộ label YOLO")
+    val = model.val()
+    print("mAP@0.5:", val.box.map50)
