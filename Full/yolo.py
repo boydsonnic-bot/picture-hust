@@ -14,7 +14,7 @@ if __name__ == '__main__':
         imgsz = 320,
         device = device,
         project = 'C:\\project\\picture-hust\\Full\\experiments\\yolo_results',
-        name= 'xray_320s16V2'
+        name= 'xray_320s16V4'
         )
 
     val = model.val()
